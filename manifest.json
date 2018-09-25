@@ -1,0 +1,27 @@
+{
+
+  "manifest_version": 2,
+  "name": "VK-search",
+  "version": "1.0",
+ 
+  "description": "Леше надо",
+  "icons": {
+    "48": "icons/48.png"
+  },
+
+  "applications": {
+    "gecko": {
+      "id": "vk-search@mozilla.org",
+      "strict_min_version": "45.0"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://vk.com/search*"],
+      "js": ["jquery.js", "main.js"]
+    }
+  ]
+
+}
+

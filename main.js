@@ -79,7 +79,7 @@
        //~ $profile.attr(attr, val);///не катит
       });
     
-    $profile.append($('<current-company>').text(data.profile['Место работы'].pop ? data.profile['Место работы'][0] : data.profile['Место работы']));///верхнее место
+    $profile.append($('<current-company>').text(data.profile['Место работы'] && (data.profile['Место работы'].pop ? data.profile['Место работы'][0] : data.profile['Место работы'])));///верхнее место
     $profile.append($('<data-json>').text(JSON.stringify(data.profile)));
     //~ Data.push(data);
     Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));

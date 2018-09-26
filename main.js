@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea></div>');//
+  var mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class="total"></div></div>');//
   
   var Data = [];///массив результатов
   var $Data = {};///кэш по уникальным href
@@ -46,6 +46,7 @@
   const ProcessData = (res) => {///массив div- позиций в поисковой выдаче
     var item = res.shift();
     $('textarea', mainDiv).val('Осталось позиций: '+res.length);
+    $('.total', mainDiv).text('Всего обработано: '+Data.length);
     if (!item) {///финал
       //~ $('#search-vk').show();
       $('#search-vk').prop('disabled', false);

@@ -35,13 +35,23 @@
   };
   
   /// на странице профиля выбрать для поля его значения
-  const mapProfileLabels = (node) => {
+  const mapProfileLabelContents  = (node) => {
     //~ var val = this;///массив значений поля
      var text = $(node).text().replace(RE['пусто'], '');///*.replace(RE.escapeAmp, replaceTag)*/.replace(RE.escape, replaceTag);
      //~ if (text === undefined || text === null || text == '') return;
      //~ if (text) val.push(text);
     return text;
-    
+  };
+  
+  const mapProfileLabels = (label, data) => {
+    var $label = $(label);
+     var attr = $label.text().replace(RE['двоеточие'], '');
+     var val = $label.next().contents().toArray().map(mapProfileLabelContents);
+     if (data.profile[attr]) {
+       if (!data.profile[attr].pop) data.profile[attr] = [data.profile[attr]];///Object.prototype.toString.call(data.profile[attr]) != '[object Array]'
+       data.profile[attr].push(val.join(' ').replace(RE['пусто'], ''));
+      }
+     else data.profile[attr] = val.join(' ').replace(RE['пусто'], '');
   };
 
   ///рекурсия с выборкой массива результатов поиска
@@ -72,14 +82,7 @@
      }).responseText;
      var $htmlPage = $(htmlPage);
      $('.profile_info_row .label.fl_l', $htmlPage).map(function(){
-       var $this = $(this);
-       var attr = $this.text().replace(RE['двоеточие'], '');
-       var val = $this.next().contents().toArray().map(mapProfileLabels);
-       if (data.profile[attr]) {
-         if (!data.profile[attr].pop) data.profile[attr] = [data.profile[attr]];///Object.prototype.toString.call(data.profile[attr]) != '[object Array]'
-         data.profile[attr].push(val.join(' ').replace(RE['пусто'], ''));
-        }
-       else data.profile[attr] = val.join(' ').replace(RE['пусто'], '');
+       mapProfileLabels(this, data);
        //~ $profile.attr(attr, val);///не катит
       });
     
@@ -91,7 +94,8 @@
     sleep(1100).then(function(){ ProcessData(res); });///не больше 1 запроса в сек
   };
   
-  const showMore = () => {///пролистать весь список
+  ///пролистать весь список
+  const showMore = () => {
     var loadMore = $('#ui_search_load_more');
     if (!$('#no_results').length && loadMore.length) window.wrappedJSObject.searcher.showMore();
     if (loadMore.css('display') == 'block') return sleep(500).then(showMore);

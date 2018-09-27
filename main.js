@@ -1,6 +1,8 @@
 (function () {
   'use strict';
-  var mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class="total"></div></div>');//
+  var $mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class="total"></div></div>');//
+  var $textarea = $('textarea', $mainDiv);
+  var $total = $('.total', $mainDiv);
   
   var Data = [];///массив результатов
   var $Data = {};///кэш по уникальным href
@@ -45,12 +47,13 @@
   ///рекурсия с выборкой массива результатов поиска
   const ProcessData = (res) => {///массив div- позиций в поисковой выдаче
     var item = res.shift();
-    $('textarea', mainDiv).val('Осталось позиций: '+res.length);
-    $('.total', mainDiv).text('Всего обработано: '+Data.length);
+    $textarea.val('Осталось позиций: '+res.length);
+    $total.text('Всего обработано: '+Data.length).css('color', 'red');
     if (!item) {///финал
       //~ $('#search-vk').show();
       $('#search-vk').prop('disabled', false);
-      return $('textarea', mainDiv).val('<?xml version="1.0" encoding="UTF-8"?>\n<people>\n'+Data.join("\n")+"\n</people>\n");///JSON.stringify(Data)
+      $total.css('color', 'green');
+      return $textarea.val('<?xml version="1.0" encoding="UTF-8"?>\n<people>\n'+Data.join("\n")+"\n</people>\n");///JSON.stringify(Data)
     }
     var $item = $(item);
     var href = $('a', $item).attr('href');
@@ -101,7 +104,7 @@
   $(document).ready(function () {
     
 
-    $('body').prepend(mainDiv);
+    $('body').prepend($mainDiv);
     $('#search-vk').click(function(ev){
       
       //~ $(this).hide();

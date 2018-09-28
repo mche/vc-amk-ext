@@ -1,11 +1,36 @@
 (function () {
   'use strict';
-  var $mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class="total"></div></div>');//
+  var $mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class=""><button class="flat_button button_small button_wide total" style="background-color: lightgrey;" title="остановить"></button><button class="flat_button button_small button_wide clear" style="background-color: lightpink; color: red; display:none;">Очистить все</button></div></div>');//
   var $textarea = $('textarea', $mainDiv);
   var $total = $('.total', $mainDiv);
+  var $clear = $('.clear', $mainDiv);
   
-  var Data = [];///массив результатов
-  var $Data = {};///кэш по уникальным href
+  var Data = JSON.parse(localStorage.getItem('Data') || '[]');///массив результатов
+  var $Data = JSON.parse(localStorage.getItem('$Data') || '{}');///кэш по уникальным href
+  
+  const SaveStorage = () => {
+    localStorage.setItem('Data', JSON.stringify(Data));
+    localStorage.setItem('$Data', JSON.stringify($Data));
+  };
+  
+  const ShowData = (val) => {
+    if(val === undefined) val = '<?xml version="1.0" encoding="UTF-8"?>\n<people>\n'+Data.join("\n")+"\n</people>\n";
+    $textarea.val(val);
+    $clear.show();
+  };
+  
+  if (Data.length) {
+    $total.text('Всего: '+Data.length).css('color', 'green');
+    ShowData();
+    $clear.on('click', function(){
+      Data.splice(0, Data.length);
+      Object.keys($Data).map(function(key){ delete $Data[key] });
+      SaveStorage();
+      ShowData('');
+      $total.text('');
+    });
+  }
+  
   var RE = {
     'двоеточие': new RegExp('\s*:\s*$'),
     "escape": /[<>"'`=\/]/g,
@@ -58,12 +83,12 @@
   const ProcessData = (res) => {///массив div- позиций в поисковой выдаче
     var item = res.shift();
     $textarea.val('Осталось позиций: '+res.length);
-    $total.text('Всего обработано: '+Data.length).css('color', 'red');
+    $total.text('Всего: '+Data.length).css('color', 'maroon');
     if (!item) {///финал
       //~ $('#search-vk').show();
       $('#search-vk').prop('disabled', false);
       $total.css('color', 'green');
-      return $textarea.val('<?xml version="1.0" encoding="UTF-8"?>\n<people>\n'+Data.join("\n")+"\n</people>\n");///JSON.stringify(Data)
+      return ShowData();///JSON.stringify(Data)
     }
     var $item = $(item);
     var href = $('a', $item).attr('href');
@@ -91,23 +116,28 @@
     //~ Data.push(data);
     Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));
     $Data[href] = data;
+    SaveStorage();
     sleep(1100).then(function(){ ProcessData(res); });///не больше 1 запроса в сек
   };
   
   ///пролистать весь список
   const showMore = () => {
+    $textarea.val('Идет прокрутка поиска...');
     var loadMore = $('#ui_search_load_more');
     if (!$('#no_results').length && loadMore.length) window.wrappedJSObject.searcher.showMore();
     if (loadMore.css('display') == 'block') return sleep(500).then(showMore);
     ///console.log('results ', $('#results > div').length, window.wrappedJSObject.searcher );
     var data = $('#results div.labeled.name').toArray();///.map(processItem);
+    $total.one( "click", function() {
+      data.splice(0, data.length);
+    });
+    $clear.hide();
     ProcessData(data);
   };
   
  
   $(document).ready(function () {
     
-
     $('body').prepend($mainDiv);
     $('#search-vk').click(function(ev){
       

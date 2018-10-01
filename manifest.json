@@ -2,7 +2,7 @@
 
   "manifest_version": 2,
   "name": "VK люди+",
-  "version": "1.5",
+  "version": "1.6",
  
   "description": "Леше надо",
   "icons": {
@@ -18,7 +18,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://vk.com/search*"],
+      "matches": ["https://vk.com/search*", "https://vk.com/friends*", "https://vk.com/people*"],
       "js": ["jquery.js", "main.js"]
     }
   ]

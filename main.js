@@ -28,8 +28,11 @@
       SaveStorage();
       ShowData('');
       $total.text('');
+      $clear.hide();
     });
   }
+  
+  const months = {'января':'01', 'февраля':'02', 'марта': '03', 'апреля': '04', 'мая':'05', 'июня':'06', 'июля':'07', 'августа':'08', 'сентября':'09', 'октября':'10', 'ноября':'11', 'декабря':'12'};
   
   var RE = {
     'двоеточие': new RegExp('\s*:\s*$'),
@@ -37,6 +40,9 @@
     "escapeAmp": /[&]/g, ///  отдельно впереди будет замена
     "escapeQuot": /\\"/g, /// будет замена после JSON.stringify() и .html()
     "пусто": /^\s+|\s+$/g,
+    "day": /(\d+)\s+/, /// !!!косячит replace month
+    "month": new RegExp('\s*(' + Object.keys(months).join('|') + ')\s*'),
+    "year": /\s*(\d+)\s*г\./,
   };
   var escapeChars = {///для xml
     '&': '&amp;',
@@ -48,6 +54,11 @@
     //~ '/': '&#x2F;',
     //~ '`': '&#x60;',
     //~ '=': '&#x3D;'
+  };
+  
+  const replaceMonth = (mon, p1, p2) => {
+    return '.'+months[p1];
+    
   };
   
   ///для xml
@@ -109,10 +120,10 @@
      $('.profile_info_row .label.fl_l', $htmlPage).map(function(){
        mapProfileLabels(this, data);
        //~ $profile.attr(attr, val);///не катит
-      });
+    });
     
     $profile.append($('<current-company>').text(data.profile['Место работы'] && (data.profile['Место работы'].pop ? data.profile['Место работы'][0] : data.profile['Место работы'])));///верхнее место
-    $profile.append($('<birthday>').text(data.profile['День рождения']));
+    $profile.append($('<birthday>').text(data.profile['День рождения'] && data.profile['День рождения'].toString().replace(RE.day, '$1').replace(RE.month, replaceMonth).replace(RE.year, '.$1')));
     $profile.append($('<data-json>').text(JSON.stringify(data.profile)));
     //~ Data.push(data);
     Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));

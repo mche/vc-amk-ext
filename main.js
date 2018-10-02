@@ -91,7 +91,7 @@
   };
 
   ///рекурсия с выборкой массива результатов поиска
-  const ProcessData = (res) => {///массив div- позиций в поисковой выдаче
+  const ProcessData = (res, company, dolzhnost) => {///массив div- позиций в поисковой выдаче
     var item = res.shift();
     $textarea.val('Осталось позиций: '+res.length);
     $total.text('Всего: '+Data.length).css('color', 'maroon');
@@ -103,8 +103,8 @@
     }
     var $item = $(item);
     var href = $('a', $item).attr('href');
-    if(!href || $Data[href]) return ProcessData(res);
-    var data = {"name": $item.text(), "href": href, "profile":{}, "search-company": $('#company"]').val(), "search-position": $('#position').val()};
+    if(!href || $Data[href]) return ProcessData(res, company, dolzhnost);
+    var data = {"name": $item.text(), "href": href, "profile":{}, "search-company": company, "search-position": dolzhnost,};
     var $profile = $('<profile>').attr('href', 'https://vk.com'+href)
       .append($('<name>').text(data.name))
       .append($('<poisk-company>').text(data['search-company']))
@@ -129,7 +129,7 @@
     Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));
     $Data[href] = data;
     SaveStorage();
-    sleep(1100).then(function(){ ProcessData(res); });///не больше 1 запроса в сек
+    sleep(1100).then(function(){ ProcessData(res, company, dolzhnost); });///не больше 1 запроса в сек
   };
   
   ///пролистать весь список
@@ -143,8 +143,10 @@
     $total.one( "click", function() {
       data.splice(0, data.length);
     });
+    var company = $('#company').val(),
+      dolzhnost=$('#position').val();
     $clear.hide();
-    ProcessData(data);
+    ProcessData(data, company, dolzhnost);
   };
   
  

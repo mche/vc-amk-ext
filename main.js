@@ -104,7 +104,7 @@
     var $item = $(item);
     var href = $('a', $item).attr('href');
     if(!href || $Data[href]) return ProcessData(res);
-    var data = {"name": $item.text(), "href": href, "profile":{}, "search-company": $('input[name="c[company]"]').val(), "search-position": $('#position').val()};
+    var data = {"name": $item.text(), "href": href, "profile":{}, "search-company": $('#company"]').val(), "search-position": $('#position').val()};
     var $profile = $('<profile>').attr('href', 'https://vk.com'+href)
       .append($('<name>').text(data.name))
       .append($('<poisk-company>').text(data['search-company']))

@@ -36,6 +36,7 @@
   
   var RE = {
     'двоеточие': new RegExp('\s*:\s*$'),
+    "пробелы": /\s+/,
     "escape": /[<>"'`=\/]/g,
     "escapeAmp": /[&]/g, ///  отдельно впереди будет замена
     "escapeQuot": /\\"/g, /// будет замена после JSON.stringify() и .html()
@@ -58,7 +59,6 @@
   
   const replaceMonth = (mon, p1, p2) => {
     return '.'+months[p1];
-    
   };
   
   ///для xml
@@ -104,9 +104,12 @@
     var $item = $(item);
     var href = $('a', $item).attr('href');
     if(!href || $Data[href]) return ProcessData(res, company, dolzhnost);
-    var data = {"name": $item.text(), "href": href, "profile":{}, "search-company": company, "search-position": dolzhnost,};
+    
+    var data = {"name": $item.text().replace(RE['пусто'], ''), "href": href, "profile":{}, "search-company": company, "search-position": dolzhnost,};
+    var names = data.name.split(RE['пробелы']);
     var $profile = $('<profile>').attr('href', 'https://vk.com'+href)
-      .append($('<name>').text(data.name))
+      .append($('<name1>').text(names.shift()))
+      .append($('<name2>').text(names.join(' ')))
       .append($('<poisk-company>').text(data['search-company']))
       .append($('<poisk-dolzhnost>').text(data['search-position']))
     ;
@@ -145,7 +148,7 @@
     });
     var company = $('#company').val(),
       dolzhnost=$('#position').val();
-    $clear.hide();
+    $clear.hide();    
     ProcessData(data, company, dolzhnost);
   };
   

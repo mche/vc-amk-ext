@@ -1,8 +1,8 @@
 (function () {
   'use strict';
-  var $mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class=""><button class="flat_button button_small button_wide total" style="background-color: lightgrey;" title="остановить"></button><button class="flat_button button_small button_wide clear" style="background-color: lightpink; color: red; display:none;">Очистить все</button></div></div>');//
+  var $mainDiv = $('<div style="position: fixed; right:0; top: 3rem; z-index: 1000;"><h1>Леше v3+</h1><div><button id="search-vk" class="flat_button button_small button_wide">Обработать поиск</button></div><textarea style="height: 15rem;"></textarea><div class=""><button class="flat_button button_small button_wide total" style="background-color: lightgrey;" title="остановить"></button><button class="flat_button button_small button_wide clear" style="background-color: lightpink; color: red; display:none;">Очистить все</button></div></div>');//
   var $textarea = $('textarea', $mainDiv);
-  var $total = $('.total', $mainDiv);
+  var $total = $('.total', $mainDiv).on('click', function(){ $textarea[0].focus(); $textarea[0].select(); console.log("копировано", document.execCommand('copy')); });
   var $clear = $('.clear', $mainDiv);
   
   var Data = JSON.parse(localStorage.getItem('Data') || '[]');///массив результатов
@@ -70,35 +70,56 @@
     return new Promise(resolve => setTimeout(resolve, milliseconds))
   };
   
-  /// на странице профиля выбрать для поля его значения
-  const mapProfileLabelContents  = (node) => {
-    //~ var val = this;///массив значений поля
-     var text = $(node).text().replace(RE['пусто'], '');///*.replace(RE.escapeAmp, replaceTag)*/.replace(RE.escape, replaceTag);
-     //~ if (text === undefined || text === null || text == '') return;
-     //~ if (text) val.push(text);
-    return text;
-  };
-  
-  const mapProfileLabels = (label, data) => {
-    var $label = $(label);
-     var attr = $label.text().replace(RE['двоеточие'], '');
-     var val = $label.next().contents().toArray().map(mapProfileLabelContents);
+  const mapProfile = (row, data) => {
+    //~ var $row = $(row);
+     //~ var attr = $row.text().replace(RE['двоеточие'], '');
+    //~ var split = $row.text().split(RE['двоеточие']);
+    //~ return console.log("mapProfile", row.children);
+    if (!row.children[0] || !row.children[1] ) return console.log("кривая строка профиля:", row);
+    var attr = row.children[0].textContent.replace(RE['двоеточие'], '');
+     //~ var val = $row.next().contents().toArray().map(mapProfileLabelContents);
+    var val =  row.children[1].textContent.replace(RE['пусто'], '');
      if (data.profile[attr]) {
        if (!data.profile[attr].pop) data.profile[attr] = [data.profile[attr]];///Object.prototype.toString.call(data.profile[attr]) != '[object Array]'
-       data.profile[attr].push(val.join(' ').replace(RE['пусто'], ''));
+       data.profile[attr].push(val);///.join(' ').replace(RE['пусто'], '')
       }
-     else data.profile[attr] = val.join(' ').replace(RE['пусто'], '');
+     else data.profile[attr] = val;///.join(' ').replace(RE['пусто'], '')
+  };
+  
+  const GetProfile = function(href){
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", href);
+      xhr.onload = function () {
+        if (this.status >= 200 && this.status < 300) {
+          resolve(xhr.responseText);
+        } else {
+          reject({
+            status: this.status,
+            statusText: xhr.statusText
+          });
+        }
+      };
+      xhr.onerror = function () {
+        reject({
+          status: this.status,
+          statusText: xhr.statusText
+        });
+      };
+      xhr.send();
+    });
   };
 
   ///рекурсия с выборкой массива результатов поиска
   const ProcessData = (res, company, dolzhnost) => {///массив div- позиций в поисковой выдаче
     var item = res.shift();
     $textarea.val('Осталось позиций: '+res.length);
-    $total.text('Всего: '+Data.length).css('color', 'maroon');
+    $total.text('Обработано: '+Data.length).css('color', 'maroon');
     if (!item) {///финал
       //~ $('#search-vk').show();
       $('#search-vk').prop('disabled', false);
       $total.css('color', 'green');
+      $total.text('Копировать: '+Data.length);
       return ShowData();///JSON.stringify(Data)
     }
     var $item = $(item);
@@ -115,24 +136,30 @@
     ;
 
     /// запрос полного профиля
-    var htmlPage = $.ajax({
-      url: href,
-      async: false
-     }).responseText;
-     var $htmlPage = $(htmlPage);
-     $('.profile_info_row .label.fl_l', $htmlPage).map(function(){
-       mapProfileLabels(this, data);
-       //~ $profile.attr(attr, val);///не катит
+    ////synchronous requests on the main thread have been deprecated due to their negative impact on the user experience.
+    GetProfile('https://vk.com'+href).then(function(resp){
+      
+       var $htmlPage = $(resp);
+       //~ console.log("профиль", $htmlPage);
+       $('.profile_info_row', $htmlPage).map(function(){/// .label.fl_l
+         //~ console.log("profile_info_row", this);
+         mapProfile(this, data);
+         //~ $profile.attr(attr, val);///не катит
+      });
+      
+      $profile.append($('<current-company>').text(data.profile['Место работы'] && (data.profile['Место работы'].pop ? data.profile['Место работы'][0] : data.profile['Место работы'])));///верхнее место
+      $profile.append($('<birthday>').text(data.profile['День рождения'] && data.profile['День рождения'].toString().replace(RE.day, '$1').replace(RE.month, replaceMonth).replace(RE.year, '.$1')));
+      $profile.append($('<data-json>').text(JSON.stringify(data.profile)));
+      //~ Data.push(data);
+      Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));
+      $Data[href] = data;
+      SaveStorage();
+      sleep(1100).then(function(){ ProcessData(res, company, dolzhnost); });///не больше 1 запроса в сек
+    })
+    .catch(function (err) {
+      console.error('Ошибка получения профиля: '+'https://vk.com'+href, err, );
+      sleep(1100).then(function(){ ProcessData(res, company, dolzhnost); });///не больше 1 запроса в сек
     });
-    
-    $profile.append($('<current-company>').text(data.profile['Место работы'] && (data.profile['Место работы'].pop ? data.profile['Место работы'][0] : data.profile['Место работы'])));///верхнее место
-    $profile.append($('<birthday>').text(data.profile['День рождения'] && data.profile['День рождения'].toString().replace(RE.day, '$1').replace(RE.month, replaceMonth).replace(RE.year, '.$1')));
-    $profile.append($('<data-json>').text(JSON.stringify(data.profile)));
-    //~ Data.push(data);
-    Data.push($('<item>').append($profile).html().replace(RE.escapeQuot, escapeChars['"']));
-    $Data[href] = data;
-    SaveStorage();
-    sleep(1100).then(function(){ ProcessData(res, company, dolzhnost); });///не больше 1 запроса в сек
   };
   
   ///пролистать весь список
